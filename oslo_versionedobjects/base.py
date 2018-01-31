@@ -271,8 +271,8 @@ class VersionedObject(object):
     # fields = { 'foo': obj_fields.IntegerField(),
     #            'bar': obj_fields.StringField(),
     #          }
-    fields = {}
-    obj_extra_fields = []
+    fields = {} #一般属性及其值
+    obj_extra_fields = [] #额外的属性
 
     # Table of sub-object versioning information
     #
@@ -307,6 +307,7 @@ class VersionedObject(object):
             setattr(self, key, kwargs[key])
 
     def __repr__(self):
+        #将对象输出为字符串
         repr_str = '%s(%s)' % (
             self.obj_name(),
             ','.join(['%s=%s' % (name,
@@ -319,6 +320,7 @@ class VersionedObject(object):
         return repr_str
 
     def __contains__(self, name):
+        '''检查此对象是否包含指定attr'''
         try:
             return self.obj_attr_is_set(name)
         except AttributeError:
@@ -336,6 +338,7 @@ class VersionedObject(object):
 
     @classmethod
     def obj_name(cls):
+        #对象名称
         """Return the object's name
 
         Return a canonical name for this object which will be used over
@@ -679,13 +682,16 @@ class VersionedObject(object):
         a valid attribute for this object.
         """
         if attrname not in self.obj_fields:
+            #属性必须在obj_fields中指明
             raise AttributeError(
                 _("%(objname)s object has no attribute '%(attrname)s'") %
                 {'objname': self.obj_name(), 'attrname': attrname})
+        #检查此属性是否被设置了值
         return hasattr(self, _get_attrname(attrname))
 
     @property
     def obj_fields(self):
+        #fields中定出出来的key 合上扩展属性
         return list(self.fields.keys()) + self.obj_extra_fields
 
     @property
@@ -700,6 +706,7 @@ class ComparableVersionedObject(object):
     this mixin can be used.
     """
     def __eq__(self, obj):
+        #两个对象比对，采用obj_to_primitive函数返回值进行比对
         # FIXME(inc0): this can return incorrect value if we consider partially
         # loaded objects from db and fields which are dropped out differ
         if hasattr(obj, 'obj_to_primitive'):
@@ -710,6 +717,7 @@ class ComparableVersionedObject(object):
         return super(ComparableVersionedObject, self).__hash__()
 
     def __ne__(self, obj):
+        #实现两个对象的不相等
         if hasattr(obj, 'obj_to_primitive'):
             return self.obj_to_primitive() != obj.obj_to_primitive()
         return NotImplemented
@@ -725,6 +733,7 @@ class VersionedObjectDictCompat(object):
     attribute access.
     """
 
+    #对象属性遍历
     def __iter__(self):
         for name in self.obj_fields:
             if (self.obj_attr_is_set(name) or
@@ -733,10 +742,12 @@ class VersionedObjectDictCompat(object):
 
     iterkeys = __iter__
 
+    #遍历属性值
     def itervalues(self):
         for name in self:
             yield getattr(self, name)
 
+    #遍历key,value格式
     def iteritems(self):
         for name in self:
             yield name, getattr(self, name)
@@ -749,6 +760,7 @@ class VersionedObjectDictCompat(object):
         values = itervalues
         items = iteritems
     else:
+        #提供keys,values,items的属性值
         def keys(self):
             return list(self.iterkeys())
 
@@ -766,14 +778,18 @@ class VersionedObjectDictCompat(object):
 
     def get(self, key, value=_NotSpecifiedSentinel):
         if key not in self.obj_fields:
+            #key未指明，扔异常
             raise AttributeError("'%s' object has no attribute '%s'" % (
                 self.__class__, key))
         if value != _NotSpecifiedSentinel and not self.obj_attr_is_set(key):
+            #未设置值，且提供了value,返回默认值
             return value
         else:
+            #返回key对应的数值
             return getattr(self, key)
 
     def update(self, updates):
+        #更新内容
         for key, value in updates.items():
             setattr(self, key, value)
 
