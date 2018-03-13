@@ -13,6 +13,7 @@
 #    under the License.
 
 import datetime
+import warnings
 
 import iso8601
 import mock
@@ -296,6 +297,11 @@ class TestUUID(TestField):
         self.test_from_primitive()
         self.test_to_primitive()
 
+    def test_validation_warning_can_be_escalated_to_exception(self):
+        warnings.filterwarnings(action='error')
+        self.assertRaises(FutureWarning, self.field.coerce, 'obj', 'attr',
+                          'not a uuid')
+
     def test_get_schema(self):
         field = fields.UUIDField()
         schema = field.get_schema()
@@ -560,7 +566,7 @@ class TestFlexibleBoolean(TestField):
 class TestDateTime(TestField):
     def setUp(self):
         super(TestDateTime, self).setUp()
-        self.dt = datetime.datetime(1955, 11, 5, tzinfo=iso8601.iso8601.Utc())
+        self.dt = datetime.datetime(1955, 11, 5, tzinfo=iso8601.iso8601.UTC)
         self.field = fields.DateTimeField()
         self.coerce_good_values = [(self.dt, self.dt),
                                    (_utils.isotime(self.dt), self.dt)]
@@ -573,7 +579,7 @@ class TestDateTime(TestField):
             '1955-11-05T18:00:00Z',
             self.field.stringify(
                 datetime.datetime(1955, 11, 5, 18, 0, 0,
-                                  tzinfo=iso8601.iso8601.Utc())))
+                                  tzinfo=iso8601.iso8601.UTC)))
 
     def test_get_schema(self):
         self.assertEqual({'type': ['string'], 'format': 'date-time',

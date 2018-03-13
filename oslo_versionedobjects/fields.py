@@ -347,7 +347,10 @@ class UUID(StringPattern):
     def coerce(obj, attr, value):
         # FIXME(danms): We should actually verify the UUIDness here
         with warnings.catch_warnings():
-            warnings.simplefilter("once")
+            # Change the warning action only if no other filter exists
+            # for this warning to allow the client to define other action
+            # like 'error' for this warning.
+            warnings.filterwarnings(action="once", append=True)
             try:
                 uuid.UUID(str(value))
             except Exception:
@@ -468,7 +471,7 @@ class DateTime(FieldType):
             # NOTE(danms): Legacy objects from sqlalchemy are stored in UTC,
             # but are returned without a timezone attached.
             # As a transitional aid, assume a tz-naive object is in UTC.
-            value = value.replace(tzinfo=iso8601.iso8601.Utc())
+            value = value.replace(tzinfo=iso8601.UTC)
         elif not self.tzinfo_aware:
             value = value.replace(tzinfo=None)
         return value
